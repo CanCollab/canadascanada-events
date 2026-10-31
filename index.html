@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How a railway’s radio became the CBC: CanadaScanada prototype</title>
+<meta name="description" content="A pre-launch sample timeline made for a talk: eleven sourced records from CNR Radio to the CBC.">
+<style>
+:root{--ink:#1E1D1A;--ink-soft:#57534B;--bg-page:#F7F5F0;--bg-card:#FFFFFF;--border:#D8D3C7;--edge:#8A8476;--p:#D52B1E;--a:#D52B1E;--bar:#D52B1E;--mark:#EB2D37;--card-edge:#8A8476;color-scheme:light}
+@media (prefers-color-scheme: dark){:root{--ink:#EDE9E0;--ink-soft:#B3ADA1;--bg-page:#151412;--bg-card:#1E1D1A;--border:#3B3833;--edge:#6E6960;--p:#F07A6A;--a:#D52B1E;--bar:#D52B1E;--mark:#EB2D37;--card-edge:#6E6960;color-scheme:dark}}
+/* Base styles for the UX v1 reference pages. Derived from test page v2.
+   Colour never carries meaning about an event: every card and code takes
+   the same colour within a theme. Theme tokens are generated above. */
+:root{
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --serif:var(--sans);
+  --hdr:60px;
+}
+body{margin:0;background:var(--bg-page);color:var(--ink);font-family:var(--sans)}
+a{color:var(--ink);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:2px}
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.k{font:600 12px/1.4 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.skip{position:absolute;left:8px;top:-60px;z-index:50;padding:8px 12px;background:var(--bg-card);border:2px solid var(--ink)}
+.skip:focus{top:8px}
+
+/* Header: brand (wordmark plus the tiny flag), site nav, then controls (language, appearance, theme selector) */
+.site{position:sticky;top:0;z-index:20;min-height:var(--hdr);box-sizing:border-box;display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center;padding:0 24px;background:var(--bg-page);border-bottom:3px solid var(--bar,var(--p))}
+/* The flag sits on the wordmark's baseline: an inline-block with no in-flow content aligns its bottom edge there,
+   so the 15px flag never goes below the letters and its top is level with, or just above, the tallest letter.
+   The pole is flush with the flag: at 19px there is no room for pole below it (operator, round L). */
+.brand{display:block;white-space:nowrap;font:700 19px/1.2 var(--serif)}
+.wordmark{font:700 19px/1.2 var(--serif);text-decoration:none}
+.wordmark span{color:var(--mark,var(--p))}
+.nav{display:flex;gap:16px;font-size:15px;margin-right:auto}
+.controls{display:flex;align-items:center;gap:14px;font-size:14px}
+.lang{font-size:14px}
+
+/* Appearance: the obvious control. System is the default. */
+.scheme{display:flex;margin:0;padding:0;border:1px solid var(--edge);border-radius:999px;overflow:hidden}
+.scheme input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.scheme label{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;font-size:13px;cursor:pointer;color:var(--ink)}
+.scheme label + input + label{border-left:1px solid var(--edge)}
+.scheme input:checked + label{background:var(--ink);color:var(--bg-page)}
+.scheme input:focus-visible + label{outline:2px solid var(--ink);outline-offset:-4px;border-radius:999px}
+
+/* Theme selector: one collapsed control for assistive tech and keyboards.
+   Visually hidden until focused; the flag shows the result. */
+.ts{position:relative}
+.ts > summary{list-style:none;cursor:pointer;font-size:13px;padding:4px 8px;border:1px solid var(--edge);border-radius:999px}
+.ts > summary::-webkit-details-marker{display:none}
+.ts:not([open]):not(:has(summary:focus-visible)){position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ts-set{position:absolute;width:1px;min-width:0;height:1px;margin:0;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:root:has(.ts-set input:focus-visible) .fp{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
+
+/* The flag: Quick Change mechanics from the lab, at a 15px hoist.
+   Each flag is a label for the next radio. Pointer only; hidden from assistive tech. */
+.fp{--fp-flag-h:15px;--fp-furl:100ms;--fp-drop:160ms;--fp-raise:160ms;--fp-unfurl:200ms;--fp-handover:-30ms;--fp-tempo:1;
+  --fp-ease-out:cubic-bezier(.45,0,.55,1);--fp-ease-in:cubic-bezier(.25,.8,.35,1);--fp-ease-open:cubic-bezier(.3,.9,.35,1);
+  --fp-drop-at:calc((var(--fp-furl) - 10ms) * var(--fp-tempo));
+  --fp-raise-at:calc((var(--fp-furl) - 10ms + var(--fp-drop) + var(--fp-handover)) * var(--fp-tempo));
+  --fp-open-at:calc(var(--fp-raise-at) + (var(--fp-raise) - 10ms) * var(--fp-tempo));
+  position:relative;display:inline-block;vertical-align:baseline;width:36px;height:15px;margin-left:7px}
+.fp-staff{position:absolute;left:0;top:3px;bottom:0;width:2px;background:var(--edge)}
+.fp-finial{position:absolute;left:0;top:0;width:2px;height:2px;background:var(--p)}
+.fp-cloths{position:absolute;left:2px;top:0;width:34px;height:15px;overflow:hidden;overflow:clip}
+.fp-cloth{position:absolute;left:0;top:0;cursor:pointer;line-height:0;transform:translateY(165%);transition:transform calc(var(--fp-drop) * var(--fp-tempo)) var(--fp-ease-out) var(--fp-drop-at)}
+.fp-furl{display:block;line-height:0;transform:scaleX(.06);transform-origin:left center;transition:transform calc(var(--fp-furl) * var(--fp-tempo)) cubic-bezier(.55,0,.75,1) 0s}
+.fp-flag{display:block;height:var(--fp-flag-h);width:auto;image-rendering:pixelated;image-rendering:crisp-edges;box-shadow:0 0 0 .5px rgba(0,0,0,.32)}
+@keyframes fp-flutter{0%,100%{transform:perspective(120px) rotateY(0) skewY(0)}35%{transform:perspective(120px) rotateY(-7deg) skewY(-1.2deg)}70%{transform:perspective(120px) rotateY(4deg) skewY(.7deg)}}
+@media (prefers-reduced-motion: reduce){ .fp-cloth,.fp-furl{transition:none !important} }
+@supports not selector(:has(*)){ .fp,.ts{display:none} }
+
+/* Arrival intro */
+main{max-width:920px;margin:0 auto;padding:24px 24px 64px}
+.intro{margin:0 0 28px;padding-left:calc(7rem + 24px)}
+.intro h1{margin:0 0 6px;font:600 28px/1.2 var(--serif)}
+.intro p{margin:0 0 8px;font-size:16px;line-height:1.5;color:var(--ink-soft)}
+.slot{border:1px dashed var(--edge);border-radius:4px;padding:8px 12px;font-size:14px}
+.slot .k{margin-right:6px}
+
+/* Timeline: year rail on the left, cards on the right */
+.yr-sec{display:grid;grid-template-columns:7rem minmax(0,1fr);column-gap:24px;margin-bottom:28px}
+.yr{position:sticky;top:calc(var(--hdr) + 12px);align-self:start;margin:0;padding-top:2px;font:600 28px/1 var(--serif)}
+.cards{display:flex;flex-direction:column;gap:6px;list-style:none;margin:0;padding:0}
+.bar{position:sticky;top:var(--hdr);z-index:5;display:flex;align-items:center;gap:10px;margin:0;padding:10px 0 6px;background:var(--bg-page);font:600 14px/1.3 var(--sans)}
+.bar::after{content:"";flex:1;border-top:2px solid var(--a)}
+
+/* Headline card */
+.hc{position:relative;background:var(--bg-card);border:1px solid var(--card-edge);border-radius:4px;padding:14px 16px 44px;scroll-margin-top:calc(var(--hdr) + 40px)}
+@media (any-hover: hover){
+  .hc:has(> .hc-d:not([open])):hover{border-color:var(--p);box-shadow:0 0 0 1px var(--p)}
+  .hc:has(> .hc-d:not([open])):hover .hc-label,.hc-sum:hover .hc-label{color:var(--p);background:color-mix(in srgb,var(--p) 12%,transparent)}
+  .drawer:hover{background:color-mix(in srgb,var(--p) 5%,transparent)}
+  .drawer > summary:hover::before{background:color-mix(in srgb,var(--p) 12%,transparent)}
+  .drawer > summary:hover::after{color:var(--p)}
+}
+.hc:target{outline:3px solid var(--ink);outline-offset:3px}
+.hc-title{margin:0;padding-right:36px;font:600 19px/1.32 var(--serif);text-wrap:pretty}
+.hc-code{position:absolute;left:16px;bottom:12px;font:600 12px/1.4 var(--sans);letter-spacing:.08em;color:var(--p)}
+.hc-sum{list-style:none;cursor:pointer}
+.hc-sum::-webkit-details-marker{display:none}
+.hc-label{position:absolute;right:10px;top:10px;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;color:var(--ink-soft)}
+.hc-label::after,.drawer > summary::after{content:"";width:12px;height:8px;background:currentColor;clip-path:polygon(0% 10%,50% 75%,100% 10%,100% 35%,50% 100%,0% 35%)}
+.hc-d[open] > .hc-sum .hc-label::after,.drawer[open] > summary::after{clip-path:polygon(0% 65%,50% 0%,100% 65%,100% 90%,50% 25%,0% 90%)}
+.hc-d:not([open]) > .hc-sum::after{content:"";position:absolute;inset:0;border-radius:4px}
+.hc-d:not([open]) > .hc-sum:focus-visible{outline:none}
+.hc-d:not([open]) > .hc-sum:focus-visible::after{outline:2px solid var(--ink);outline-offset:2px}
+.hc-d[open] > .hc-sum:focus-visible{outline:none}
+.hc-d[open] > .hc-sum:focus-visible .hc-label{outline:2px solid var(--ink);outline-offset:1px;border-radius:50%}
+.hide{display:none}
+.hc-d[open] > .hc-sum .show{display:none}
+.hc-d[open] > .hc-sum .hide{display:inline}
+
+/* Opened card */
+.hc-body{margin-top:12px;display:flex;flex-direction:column;gap:12px}
+.desc{margin:0;font:400 17px/1.6 var(--serif)}
+.note{border-left:2px solid var(--border);padding-left:12px}
+.note p{margin:0;font-size:15px;line-height:1.55}
+.note .k{margin-bottom:2px}
+.gov{margin:0;font-size:14px;line-height:1.5;color:var(--ink-soft)}
+.gov .k{margin-right:6px}
+.drawer{border-top:1px solid var(--border)}
+.drawer:last-of-type{border-bottom:1px solid var(--border)}
+.drawer > summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:44px;font-size:15px;font-weight:500;padding-right:6px}
+.drawer > summary::-webkit-details-marker{display:none}
+.drawer-body{padding:0 0 14px}
+.order{margin:0 0 8px;font-size:13px;color:var(--ink-soft)}
+.dl{display:grid;grid-template-columns:8.5rem minmax(0,1fr);gap:8px 16px;margin:0;font-size:15px;line-height:1.45}
+.dl dt{color:var(--ink-soft);white-space:nowrap}
+.dl dd{margin:0}
+.grp{margin:10px 0 6px}
+.grp:first-of-type{margin-top:0}
+.pub{display:block;font-size:14px;font-style:normal;color:var(--ink-soft)}
+.src-head{font-family:var(--serif)}
+.who{margin:0;padding-left:1.2em;font-size:15px;line-height:1.6}
+.cardlink{margin:0;font-size:15px}
+
+.foot{border-top:3px solid var(--bar,var(--p));padding:20px 24px 32px;font-size:14px;color:var(--ink-soft)}
+.foot p{margin:0;line-height:1.5}
+
+/* Narrow: header stops sticking so it never covers the reading area; the year becomes a sticky divider */
+@media (max-width: 48rem){
+  :root{--hdr:0px}
+  .site{position:static;padding:8px 16px}
+  .nav{gap:4px 14px;font-size:14px}
+  .controls{gap:12px}
+  .scheme{display:none}
+  .foot{padding-left:16px;padding-right:16px}
+  main{padding:16px 16px 48px}
+  .intro{padding-left:0}
+  .yr-sec{display:block}
+  .yr{top:0;z-index:6;background:var(--bg-page);padding:10px 0 4px;font-size:22px}
+  .bar{position:static}
+  .hc-title{font-size:18px}
+  .dl{grid-template-columns:minmax(0,1fr);gap:0}
+  .dl dd{margin-bottom:8px}
+}
+@media (max-height: 34rem){ .site,.yr,.bar{position:static} }
+@media print{
+  .controls,.hc-label,.skip{display:none}
+  .site,.yr,.bar{position:static}
+}
+
+/* Event page */
+.evp,.prose,.grp-page{max-width:46rem}
+.lede{margin:0 0 12px;color:var(--ink-soft);font-size:15px}
+.ev h1,.prose h1,.grp-page h1{margin:4px 0 12px;font:600 30px/1.25 var(--serif);text-wrap:pretty}
+.ev-date{margin:0;font:600 14px/1.3 var(--sans)}
+.strip{display:flex;flex-wrap:wrap;gap:6px 20px;margin:0 0 16px;padding:8px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);font-size:14px}
+.strip .k{margin-right:6px}
+.ev .desc{margin:0 0 14px}
+.ev section,.prose section{margin-top:28px}
+.ev h2,.prose h2{margin:0 0 8px;font:600 19px/1.3 var(--serif)}
+.thread{margin-top:20px;padding:10px 12px;border:1px solid var(--border);border-radius:4px;display:flex;flex-direction:column;gap:4px;font-size:15px}
+.thread .k,.thread .order{margin:0}
+.fields{color:var(--ink-soft)}
+.log dd{color:var(--ink)}
+.slot{border:1px dashed var(--edge);border-radius:4px;padding:8px 12px;margin:0 0 10px;font-size:14px;color:var(--ink-soft)}
+.slot p{margin:0}
+.slot .k{margin-bottom:2px}
+.mla{font-weight:600}
+.canon{font-size:14px;color:var(--ink-soft)}
+.canonical-url{user-select:all;font-family:ui-monospace,Menlo,monospace;color:var(--ink);overflow-wrap:anywhere}
+.back{margin-top:32px}
+.glist{list-style:none;margin:16px 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.glist li{display:grid;grid-template-columns:8.5rem minmax(0,1fr);gap:16px;font-size:16px;line-height:1.45}
+.glist time{color:var(--ink-soft)}
+.prose p{font-size:17px;line-height:1.6;font-family:var(--serif)}
+.parts dt{font-weight:600;margin-top:10px}
+.parts dd{margin:2px 0 0;font:17px/1.55 var(--serif)}
+.locale{margin-top:12px}
+@media (max-width: 48rem){ .glist li{grid-template-columns:minmax(0,1fr);gap:0} .ev h1{font-size:25px} }
+
+/* Studies (reference only) */
+.study{max-width:72rem}
+.study .px{image-rendering:pixelated;image-rendering:crisp-edges;display:block;box-shadow:0 0 0 .5px rgba(0,0,0,.3)}
+.ctx{display:flex;align-items:center;gap:7px;margin:16px 0}
+.tablewrap{overflow-x:auto}
+.study table{border-collapse:collapse}
+.study th,.study td{padding:8px 14px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+.frames{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.frames iframe{border:1px solid var(--edge);background:var(--bg-page)}
+.frame main{padding:12px}
+.frame .cards > li{margin-bottom:16px}
+
+/* Dates: Canadian Press forms set in three columns (month, day, year) so each part lines up */
+.date{display:inline-grid;grid-template-columns:2.55em 2.6ch 4ch;column-gap:.3em;font-variant-numeric:tabular-nums;white-space:nowrap;vertical-align:baseline}
+.dm{grid-column:1}
+.dd{grid-column:2;text-align:right}
+.dy{grid-column:3}
+.dm-wide{grid-column:1 / 3}
+.d-cp{display:contents}
+.date .d-iso{grid-column:1 / -1}
+.dl{grid-template-columns:9.5rem minmax(0,1fr)}
+.glist li{grid-template-columns:9.5rem minmax(0,1fr)}
+
+/* Actor lines: first line of the opened card and the event page */
+.actors{list-style:none;margin:0;padding:0;font-size:15px;line-height:1.5;color:var(--ink)}
+.ev .actors{margin:0 0 12px}
+
+/* Reference note sits after the timeline so nothing comes between the header and the first event */
+.refnote{max-width:46rem;margin:40px 0 0 calc(7rem + 24px)}
+.scope{font:17px/1.55 var(--serif);color:var(--ink-soft)}
+.pv1{margin-bottom:20px}
+.nochange{color:var(--ink-soft)}
+@media (max-width: 48rem){ .refnote{margin-left:0} .glist li{grid-template-columns:minmax(0,1fr)} }
+
+@media (prefers-reduced-motion: no-preference){
+  .hc-label::after,.drawer > summary::after{transition:clip-path .24s ease}
+  .drawer{transition:background-color .15s ease}
+  .hc,.hc-label{transition:border-color .15s ease,box-shadow .15s ease,background-color .15s ease,color .15s ease}
+}
+
+/* Drawer summary: chevron centred in a 28px circle on the same vertical line as the card's */
+.drawer{margin:0 -8px;padding:0 8px;border-radius:4px}
+.drawer > summary{position:relative;padding-right:0}
+.drawer > summary::before{content:"";position:absolute;right:-6px;top:50%;width:28px;height:28px;margin-top:-14px;border-radius:50%}
+.drawer > summary::after{position:relative;margin-right:2px}
+.gov{color:var(--ink-soft)}
+
+/* Keep (prototype, studies/keep.html): print only the cards the reader ticks */
+.keep{position:absolute;right:12px;bottom:10px;z-index:3;display:inline-flex;align-items:center;gap:6px;min-height:24px;font-size:13px;color:var(--ink-soft);cursor:pointer}
+.keep input{width:16px;height:16px;margin:0;accent-color:var(--p);cursor:pointer}
+.keep:has(input:checked){color:var(--p)}
+.keepform{counter-reset:kept}
+.keep input:checked{counter-increment:kept}
+.keepbar{position:sticky;bottom:12px;z-index:30;display:flex;align-items:center;gap:16px;width:max-content;max-width:calc(100% - 24px);margin:24px auto 0;padding:8px 10px 8px 16px;background:var(--ink);color:var(--bg-page);border-radius:4px;font-size:14px}
+.keepbar p{margin:0}
+.keepbar .n::before{content:counter(kept)}
+.keepbar button{font:inherit;color:inherit;background:transparent;border:1px solid currentColor;border-radius:3px;padding:2px 10px;cursor:pointer}
+.keepbar button:focus-visible{outline:2px solid var(--bg-page);outline-offset:2px}
+.keepform:not(:has(.keep input:checked)) .keepbar{display:none}
+@media print{
+  .keep,.keepbar,.slot{display:none}
+  .keepform:has(.keep input:checked) .cards > li:not(:has(.keep input:checked)){display:none}
+  .keepform:has(.keep input:checked) .yr-sec:not(:has(.keep input:checked)){display:none}
+  .keepform:has(.keep input:checked) .hc:has(.keep input:checked) details::details-content{content-visibility:visible;display:block}
+  .keepform:has(.keep input:checked) .hc:has(.keep input:checked) .drawer::details-content{content-visibility:visible;display:block}
+}
+
+/* Root 404: English and French columns, stacked on small screens (Decision 149) */
+.e404{max-width:60rem}
+.e404-cols{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.e404 h1,.e404 h2{margin:0 0 12px;font:600 28px/1.2 var(--serif)}
+.e404 .mt{font-size:15px;line-height:1.4;color:var(--ink-soft);margin:0 0 12px}
+.e404-col p{font-size:17px;line-height:1.5}
+@media (max-width: 48rem){ .e404-cols{grid-template-columns:1fr} }
+
+/* Talk page additions */
+.banner{margin:0;padding:8px 24px;background:var(--ink);color:var(--bg-page);font-size:14px;line-height:1.4;text-align:center}
+.fp .fp-cloth{transform:none}
+.fp .fp-furl{transform:none}
+.intro .frame-line{font-size:17px}
+.foot a{color:inherit}
+@media (max-width: 48rem){ .banner{padding:8px 16px;text-align:left} }
+@media print{ .banner{background:none;color:inherit;border-bottom:1px solid} }
+</style>
+</head>
+<body>
+<p class="banner" role="note">CanadaScanada prototype · Pre-launch sample made for a talk.</p>
+<a class="skip" href="#main-content">Skip to main content</a>
+<header class="site">
+<div class="brand"><span class="wordmark">Canada<span>Scanada</span></span><div class="fp" aria-hidden="true"><span class="fp-staff"></span><span class="fp-finial"></span><div class="fp-cloths"><span class="fp-cloth"><span class="fp-furl"><img class="fp-flag" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAPCAYAAADzun+cAAAWfmNhQlgAABZ+anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAFlhqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjI3YTA1NjZiLTUzMDAtNGNlNi1iMDkxLTQ1YTMyMTQ2YjYzMgAAAAOTanVtYgAAAClqdW1kYzJhcwARABCAAACqADibcQNjMnBhLmFzc2VydGlvbnMAAAAAuGp1bWIAAABEanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5pbmdyZWRpZW50LnYzAAAAABhjMnNogoTB8K3saJgvJd02I975lQAAAGxjYm9yo2lkYzpmb3JtYXRpaW1hZ2UvcG5namluc3RhbmNlSUR4LHhtcDppaWQ6MmFlZDU5MzYtNDczOS00YTAwLTgxMTctOTkwNmFhOTlmOGM1bHJlbGF0aW9uc2hpcGhwYXJlbnRPZgAAAeJqdW1iAAAAQWp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuYWN0aW9ucy52MgAAAAAYYzJzaJr0GSyZI0Tpfdf3PZpfQxEAAAGZY2JvcqJnYWN0aW9uc4KiZmFjdGlvbmtjMnBhLm9wZW5lZGpwYXJhbWV0ZXJzoWtpbmdyZWRpZW50c4GiY3VybHgtc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5pbmdyZWRpZW50LnYzZGhhc2hYIEjvIWi9NHNGnZ3wA13myAupfwB5EtdCdV6LJ0Qu2wADpGZhY3Rpb254HWNvbS5hbnRocm9waWMuY2xhdWRlLnByb3ZpZGVkanBhcmFtZXRlcnOheB9jb20uYW50aHJvcGljLm9yaWdpbi1jb25maWRlbmNlZ3Vua25vd25rZGVzY3JpcHRpb254ZkNsYXVkZSBwcm92aWRlZCB0aGlzIGZpbGUgYXQgdGhlIHJlcXVlc3Qgb2YgYSB1c2VyIGFuZCBtYXkgaGF2ZSBjcmVhdGVkIG9yIG1vZGlmaWVkIHRoZSBmaWxlIGNvbnRlbnRzLm1zb2Z0d2FyZUFnZW50oWRuYW1lZkNsYXVkZXJhbGxBY3Rpb25zSW5jbHVkZWT1AAAAyGp1bWIAAABAanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5oYXNoLmRhdGEAAAAAGGMyc2hPJgiPLHPwofZvNREp5T+BAAAAgGNib3KlY2FsZ2ZzaGEyNTZjcGFkTQAAAAAAAAAAAAAAAABkaGFzaFggyvocmR2Zb77jM6tuDvUdhSzREYmoqjyHY5k6US7RSQVkbmFtZW5qdW1iZiBtYW5pZmVzdGpleGNsdXNpb25zgaJlc3RhcnQYIWZsZW5ndGgZFooAAAI+anVtYgAAACdqdW1kYzJjbAARABCAAACqADibcQNjMnBhLmNsYWltLnYyAAAAAg9jYm9ypWNhbGdmc2hhMjU2aXNpZ25hdHVyZXhNc2VsZiNqdW1iZj0vYzJwYS91cm46YzJwYToyN2EwNTY2Yi01MzAwLTRjZTYtYjA5MS00NWEzMjE0NmI2MzIvYzJwYS5zaWduYXR1cmVqaW5zdGFuY2VJRHgseG1wOmlpZDoyMThiMDNhNi1hMTc5LTQ3MWQtYjA5OS0zMjljOTNjZjg2OGZyY3JlYXRlZF9hc3NlcnRpb25zg6JjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggSO8haL00c0adnfADXebIC6l/AHkS10J1XosnRC7bAAOiY3VybHgqc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5hY3Rpb25zLnYyZGhhc2hYICBcYOFBFVZPJ+qu9BeKmqaGyJHrfi7qsTN+F/A1AQ+NomN1cmx4KXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaGFzaC5kYXRhZGhhc2hYII5tAP+TYtepvh4b2XnDNRLgG4MmNLpSQzXTNYYC7ZOGdGNsYWltX2dlbmVyYXRvcl9pbmZvo2RuYW1lb0FudGhyb3BpYyBGaWxlc2d2ZXJzaW9uZTEuMC4wa3NwZWNWZXJzaW9uZTIuNC4wAAAQOGp1bWIAAAAoanVtZGMyY3MAEQAQgAAAqgA4m3EDYzJwYS5zaWduYXR1cmUAAAAQCGNib3LShFkCEqIBJhghWQIKMIICBjCCAY2gAwIBAgIUQOWgCu7COdC+uIP6BkIFPWdVEwAwCgYIKoZIzj0EAwMwSTEXMBUGA1UEChMOQW50aHJvcGljLCBQQkMxLjAsBgNVBAMTJUFudGhyb3BpYyBDb250ZW50IENyZWRlbnRpYWxzIFJvb3QgQ0EwHhcNMjYwODA3MTg0MzU2WhcNMjgwODA2MTk0MzU2WjBEMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEpMCcGA1UEAxMgQW50aHJvcGljIENsYXVkZSBDb250ZW50IFNpZ25pbmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASYegpry1AYBRTVNL1CpTlbROnY3dey+UrsF9C3phYrATN3ZHf93Mo8RQN0KOUuOn19P4oWNFWe5n2/She9N7eTo1gwVjAOBgNVHQ8BAf8EBAMCB4AwFQYDVR0lBA4wDAYKKwYBBAGD6F4CATAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFM5R4gSBTmRbI/jjxM+aPpzB11zCMAoGCCqGSM49BAMDA2cAMGQCMDFzHRSeAXrSy1WOzkbhPZ6Km2wGTmZ/2gK18k8BQGXyqz88Rdrz6CTX9flAnYNVxgIwcF9c3fVhqmJKpi+UhasNUMko69cyX6STPfta3Q8EjyzDjzoyrol46FP6VFHhvUcJoWNwYWRZDZ4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2WEDPSj4vQPYsdlNFPQmxO04Hw1UiAl2YDITh9S5RcLma8ItxQD9oJ5KCvO4dE22VdfVP9jtD4IqoDt8UxG4zg3BFsKBnrgAAAK9JREFUeAHEkUsOwjAMRKseBPbA/U8C7DlJ0VsMspDdTNxFI438iTuvVtbX/bJV2g6eypf+upx02uD347qg7n+3wV2gvmuB46Yxl6kTLbDMFTNj3SlmM7FngW/Pz+89MaaWCTk9aiI1+UgWGMNoFOuYM/Nf08tkgd0tALizFliGe6bcIWYd2WCZZeZZT/NVnAZnb5j1KqD602C2QzIgR6rdOA12jUdzbTBbohGguv8CAAD//wHZeacAAAAGSURBVAMA17iTdbyvGYwAAAAASUVORK5CYII=" alt="" width="30" height="15"></span></span></div></div></div>
+</header>
+<main id="main-content">
+<div class="intro">
+<h1>How a railway’s radio became the CBC</h1>
+<p class="frame-line">The real project tracks current events. This sample shows how the record works.</p>
+<p class="vh">Each card is one documented event and its sources. Events run oldest first.</p>
+</div>
+<section class="yr-sec" aria-labelledby="y1923">
+<h2 class="yr" id="y1923">1923</h2>
+<ol class="cards">
+<li>
+<p class="bar"><time class="date" datetime="1923-06-01"><span class="dm">June</span> <span class="dd">1,</span> <span class="dy">1923</span></time></p>
+<article class="hc" id="R1">
+<h3 class="hc-title">CNR announces a radio department to serve passengers and hotels</h3>
+<details class="hc-d">
+<summary class="hc-sum"><span class="hc-label"><span class="vh"><span class="show">Expand</span><span class="hide">Collapse</span>: CNR announces a radio department to serve passengers and hotels</span></span></summary>
+<div class="hc-body">
+<p class="desc">Sir Henry Thornton, president of Canadian National Railways, announces the CNR Radio Department. W.D. Robb heads it, and W.H. Swift Jr. is director.</p>
+<div class="drawers">
+<details class="drawer" open><summary>Related events</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1927-07-01"><span class="dm">July</span> <span class="dd">1,</span> <span class="dy">1927</span></time></dt><dd><a href="#R4">Diamond Jubilee broadcast from Parliament Hill reaches an estimated five million listeners</a></dd><dt><time class="date" datetime="1923-07-23"><span class="dm">July</span> <span class="dd">23,</span> <span class="dy">1923</span></time></dt><dd><a href="#R2">Passengers listen to radio aboard a moving train</a></dd></dl></div></details>
+<details class="drawer"><summary>Sources</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1998-10"><span class="dm">Oct.</span> <span class="dy">1998</span></time></dt><dd><a class="src-head" href="https://broadcasting-history.ca/radio/radio-networks/canadas-first-network-cnr-radio/broadcasting-to-promote-canadian-national-railways/">Broadcasting to Promote Canadian National Railways</a><cite class="pub">broadcasting-history.ca, part of Gormick and Potts, “Canada’s First Network: CNR Radio” (1998)</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/CNR_Radio">CNR Radio</a><cite class="pub">Wikipedia</cite></dd></dl></div></details>
+</div></div></details>
+<span class="hc-code"><span aria-hidden="true">CAN</span><span class="vh">Canada</span></span></article>
+</li>
+<li>
+<p class="bar"><time class="date" datetime="1923-07-23"><span class="dm">July</span> <span class="dd">23,</span> <span class="dy">1923</span></time></p>
+<article class="hc" id="R2">
+<h3 class="hc-title">Passengers listen to radio aboard a moving train</h3>
+<details class="hc-d">
+<summary class="hc-sum"><span class="hc-label"><span class="vh"><span class="show">Expand</span><span class="hide">Collapse</span>: Passengers listen to radio aboard a moving train</span></span></summary>
+<div class="hc-body">
+<p class="desc">A Brooklyn Daily Eagle travel party leaves Montreal’s Bonaventure Station in an observation-lounge car fitted with a radio receiver, and hears a program from Montreal station CHYC. CNR soon equips lounge and parlour cars on 16 of its named trains with receivers, loudspeakers and headsets.</p>
+<div class="drawers">
+<details class="drawer" open><summary>Related events</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1923-06-01"><span class="dm">June</span> <span class="dd">1,</span> <span class="dy">1923</span></time></dt><dd><a href="#R1">CNR announces a radio department to serve passengers and hotels</a></dd></dl></div></details>
+<details class="drawer"><summary>Sources</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="2025-12-12"><span class="dm">Dec.</span> <span class="dd">12,</span> <span class="dy">2025</span></time></dt><dd><a class="src-head" href="https://www.webpraxis.ab.ca/vrr/_Remarks/CBC.php">CNR, forerunner of the CBC</a><cite class="pub">Y. Beaudoin, Webpraxis; compiles Stevens (1973), Gormick and Potts (1998), Buck (1997) and MacKay and Perry (1994); last updated Dec. 12, 2025</cite></dd><dt><time class="date" datetime="1998-10"><span class="dm">Oct.</span> <span class="dy">1998</span></time></dt><dd><a class="src-head" href="https://broadcasting-history.ca/radio/radio-networks/canadas-first-network-cnr-radio/radio-rides-the-rails/">Radio Rides the Rails</a><cite class="pub">broadcasting-history.ca, part of Gormick and Potts, “Canada’s First Network: CNR Radio” (1998)</cite></dd></dl></div></details>
+</div></div></details>
+<span class="hc-code"><span aria-hidden="true">CAN</span><span class="vh">Canada</span></span></article>
+</li>
+<li>
+<p class="bar"><time class="date" datetime="1923-12-30"><span class="dm">Dec.</span> <span class="dd">30,</span> <span class="dy">1923</span></time></p>
+<article class="hc" id="R3">
+<h3 class="hc-title">A Montreal-to-Ottawa program is thought to be Canada’s first scheduled commercial network broadcast</h3>
+<details class="hc-d">
+<summary class="hc-sum"><span class="hc-label"><span class="vh"><span class="show">Expand</span><span class="hide">Collapse</span>: A Montreal-to-Ottawa program is thought to be Canada’s first scheduled commercial network broadcast</span></span></summary>
+<div class="hc-body">
+<p class="desc">A program from CHYC in Montreal is carried to Ottawa. Broadcasting history accounts describe it as what is thought to be Canada’s first scheduled commercial network broadcast.</p>
+<div class="drawers">
+<details class="drawer" open><summary>Related events</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1927-07-01"><span class="dm">July</span> <span class="dd">1,</span> <span class="dy">1927</span></time></dt><dd><a href="#R4">Diamond Jubilee broadcast from Parliament Hill reaches an estimated five million listeners</a></dd><dt><time class="date" datetime="1923-06-01"><span class="dm">June</span> <span class="dd">1,</span> <span class="dy">1923</span></time></dt><dd><a href="#R1">CNR announces a radio department to serve passengers and hotels</a></dd></dl></div></details>
+<details class="drawer"><summary>Sources</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="2025-12-12"><span class="dm">Dec.</span> <span class="dd">12,</span> <span class="dy">2025</span></time></dt><dd><a class="src-head" href="https://www.webpraxis.ab.ca/vrr/_Remarks/CBC.php">CNR, forerunner of the CBC</a><cite class="pub">Y. Beaudoin, Webpraxis; compiles Stevens (1973), Gormick and Potts (1998), Buck (1997) and MacKay and Perry (1994); last updated Dec. 12, 2025</cite></dd><dt><time class="date" datetime="1998-10"><span class="dm">Oct.</span> <span class="dy">1998</span></time></dt><dd><a class="src-head" href="https://broadcasting-history.ca/radio/radio-networks/canadas-first-network-cnr-radio/radio-rides-the-rails/">Radio Rides the Rails</a><cite class="pub">broadcasting-history.ca, part of Gormick and Potts, “Canada’s First Network: CNR Radio” (1998)</cite></dd></dl></div></details>
+</div></div></details>
+<span class="hc-code"><span aria-hidden="true">CAN</span><span class="vh">Canada</span></span></article>
+</li>
+</ol>
+</section>
+<section class="yr-sec" aria-labelledby="y1927">
+<h2 class="yr" id="y1927">1927</h2>
+<ol class="cards">
+<li>
+<p class="bar"><time class="date" datetime="1927-07-01"><span class="dm">July</span> <span class="dd">1,</span> <span class="dy">1927</span></time></p>
+<article class="hc" id="R4">
+<h3 class="hc-title">Diamond Jubilee broadcast from Parliament Hill reaches an estimated five million listeners</h3>
+<details class="hc-d">
+<summary class="hc-sum"><span class="hc-label"><span class="vh"><span class="show">Expand</span><span class="hide">Collapse</span>: Diamond Jubilee broadcast from Parliament Hill reaches an estimated five million listeners</span></span></summary>
+<div class="hc-body">
+<p class="desc">For Canada’s 60th anniversary of Confederation, CNR Radio carries the Parliament Hill celebration, including the new Peace Tower carillon, to 23 Canadian stations. It also reaches NBC stations in the U.S. and the BBC by shortwave. Telegraph and telephone circuits link the country. An estimated five million people hear it.</p>
+<div class="drawers">
+<details class="drawer" open><summary>Related events</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1928-12-27"><span class="dm">Dec.</span> <span class="dd">27,</span> <span class="dy">1928</span></time></dt><dd><a href="#R5">CNR Radio airs its first regularly scheduled coast-to-coast network program</a></dd><dt><time class="date" datetime="1923-12-30"><span class="dm">Dec.</span> <span class="dd">30,</span> <span class="dy">1923</span></time></dt><dd><a href="#R3">A Montreal-to-Ottawa program is thought to be Canada’s first scheduled commercial network broadcast</a></dd></dl></div></details>
+<details class="drawer"><summary>Sources</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1998-10"><span class="dm">Oct.</span> <span class="dy">1998</span></time></dt><dd><a class="src-head" href="https://broadcasting-history.ca/radio/radio-networks/canadas-first-network-cnr-radio/the-radio-broadcast-that-fulfilled-the-promise/">The Radio Broadcast that Fulfilled the Promise</a><cite class="pub">broadcasting-history.ca, part of Gormick and Potts, “Canada’s First Network: CNR Radio” (1998)</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://www.cbc.ca/archives/entry/1927-diamond-jubilee-broadcast-links-canadians">1927: Diamond Jubilee broadcast links Canadians</a><cite class="pub">CBC Digital Archives</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/CNR_Radio">CNR Radio</a><cite class="pub">Wikipedia</cite></dd></dl></div></details>
+</div></div></details>
+<span class="hc-code"><span aria-hidden="true">CAN</span><span class="vh">Canada</span></span></article>
+</li>
+</ol>
+</section>
+<section class="yr-sec" aria-labelledby="y1928">
+<h2 class="yr" id="y1928">1928</h2>
+<ol class="cards">
+<li>
+<p class="bar"><time class="date" datetime="1928-12-27"><span class="dm">Dec.</span> <span class="dd">27,</span> <span class="dy">1928</span></time></p>
+<article class="hc" id="R5">
+<h3 class="hc-title">CNR Radio airs its first regularly scheduled coast-to-coast network program</h3>
+<details class="hc-d">
+<summary class="hc-sum"><span class="hc-label"><span class="vh"><span class="show">Expand</span><span class="hide">Collapse</span>: CNR Radio airs its first regularly scheduled coast-to-coast network program</span></span></summary>
+<div class="hc-body">
+<p class="desc">Regular network programming to all CNR stations and affiliates begins. By the end of 1929, the network carries three hours of national programming a week.</p>
+<div class="drawers">
+<details class="drawer" open><summary>Related events</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1929-09-11"><span class="dm">Sept.</span> <span class="dd">11,</span> <span class="dy">1929</span></time></dt><dd><a href="#R6">Royal Commission recommends a national public broadcaster</a></dd><dt><time class="date" datetime="1927-07-01"><span class="dm">July</span> <span class="dd">1,</span> <span class="dy">1927</span></time></dt><dd><a href="#R4">Diamond Jubilee broadcast from Parliament Hill reaches an estimated five million listeners</a></dd></dl></div></details>
+<details class="drawer"><summary>Sources</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="2025-12-12"><span class="dm">Dec.</span> <span class="dd">12,</span> <span class="dy">2025</span></time></dt><dd><a class="src-head" href="https://www.webpraxis.ab.ca/vrr/_Remarks/CBC.php">CNR, forerunner of the CBC</a><cite class="pub">Y. Beaudoin, Webpraxis; compiles Stevens (1973), Gormick and Potts (1998), Buck (1997) and MacKay and Perry (1994); last updated Dec. 12, 2025</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/CNR_Radio">CNR Radio</a><cite class="pub">Wikipedia</cite></dd></dl></div></details>
+</div></div></details>
+<span class="hc-code"><span aria-hidden="true">CAN</span><span class="vh">Canada</span></span></article>
+</li>
+</ol>
+</section>
+<section class="yr-sec" aria-labelledby="y1929">
+<h2 class="yr" id="y1929">1929</h2>
+<ol class="cards">
+<li>
+<p class="bar"><time class="date" datetime="1929-09-11"><span class="dm">Sept.</span> <span class="dd">11,</span> <span class="dy">1929</span></time></p>
+<article class="hc" id="R6">
+<h3 class="hc-title">Royal Commission recommends a national public broadcaster</h3>
+<details class="hc-d">
+<summary class="hc-sum"><span class="hc-label"><span class="vh"><span class="show">Expand</span><span class="hide">Collapse</span>: Royal Commission recommends a national public broadcaster</span></span></summary>
+<div class="hc-body">
+<p class="desc">The Royal Commission on Radio Broadcasting (the Aird Commission), appointed in 1928, reports. It proposes a public body that would regulate broadcasting and operate its own stations and programs.</p>
+<div class="drawers">
+<details class="drawer" open><summary>Related events</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1932-05-26"><span class="dm">May</span> <span class="dd">26,</span> <span class="dy">1932</span></time></dt><dd><a href="#R9">Canadian Radio Broadcasting Commission established</a></dd><dt><time class="date" datetime="1928-12-27"><span class="dm">Dec.</span> <span class="dd">27,</span> <span class="dy">1928</span></time></dt><dd><a href="#R5">CNR Radio airs its first regularly scheduled coast-to-coast network program</a></dd></dl></div></details>
+<details class="drawer"><summary>Sources</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="2025-12-12"><span class="dm">Dec.</span> <span class="dd">12,</span> <span class="dy">2025</span></time></dt><dd><a class="src-head" href="https://www.webpraxis.ab.ca/vrr/_Remarks/CBC.php">CNR, forerunner of the CBC</a><cite class="pub">Y. Beaudoin, Webpraxis; compiles Stevens (1973), Gormick and Potts (1998), Buck (1997) and MacKay and Perry (1994); last updated Dec. 12, 2025</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/Canadian_Radio_Broadcasting_Commission">Canadian Radio Broadcasting Commission</a><cite class="pub">Wikipedia</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/Canadian_Broadcasting_Corporation">Canadian Broadcasting Corporation</a><cite class="pub">Wikipedia</cite></dd></dl></div></details>
+</div></div></details>
+<span class="hc-code"><span aria-hidden="true">CAN</span><span class="vh">Canada</span></span></article>
+</li>
+</ol>
+</section>
+<section class="yr-sec" aria-labelledby="y1930">
+<h2 class="yr" id="y1930">1930</h2>
+<ol class="cards">
+<li>
+<p class="bar"><time class="date" datetime="1930"><span class="dm-wide">c.</span> <span class="dy">1930</span></time></p>
+<article class="hc" id="R7">
+<h3 class="hc-title">Edmonton and Calgary stations carry the CNR network</h3>
+<details class="hc-d">
+<summary class="hc-sum"><span class="hc-label"><span class="vh"><span class="show">Expand</span><span class="hide">Collapse</span>: Edmonton and Calgary stations carry the CNR network</span></span></summary>
+<div class="hc-body">
+<p class="desc">CNR reaches Alberta listeners by leasing time on local stations: CNRE Edmonton on CJCA, and CNRC Calgary on CFAC and CFCN. CKUA in Edmonton is a network affiliate from 1930–31.</p>
+<p class="gov">Date approximate. This record rests on one source, which gives the period, not a day.</p>
+<div class="drawers">
+<details class="drawer" open><summary>Related events</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1931-11"><span class="dm">Nov.</span> <span class="dy">1931</span></time></dt><dd><a href="#R8">Saturday night hockey broadcasts begin on the network</a></dd><dt><time class="date" datetime="1928-12-27"><span class="dm">Dec.</span> <span class="dd">27,</span> <span class="dy">1928</span></time></dt><dd><a href="#R5">CNR Radio airs its first regularly scheduled coast-to-coast network program</a></dd></dl></div></details>
+<details class="drawer"><summary>Sources</summary><div class="drawer-body"><dl class="dl"><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/CNR_Radio">CNR Radio</a><cite class="pub">Wikipedia</cite></dd></dl></div></details>
+</div></div></details>
+<span class="hc-code"><span aria-hidden="true">AB</span><span class="vh">Alberta</span></span></article>
+</li>
+</ol>
+</section>
+<section class="yr-sec" aria-labelledby="y1931">
+<h2 class="yr" id="y1931">1931</h2>
+<ol class="cards">
+<li>
+<p class="bar"><time class="date" datetime="1931-11"><span class="dm">Nov.</span> <span class="dy">1931</span></time></p>
+<article class="hc" id="R8">
+<h3 class="hc-title">Saturday night hockey broadcasts begin on the network</h3>
+<details class="hc-d">
+<summary class="hc-sum"><span class="hc-label"><span class="vh"><span class="show">Expand</span><span class="hide">Collapse</span>: Saturday night hockey broadcasts begin on the network</span></span></summary>
+<div class="hc-body">
+<p class="desc">The General Motors Hockey Broadcast, also known as Saturday Night Hockey, originates on the CNR network. The CRBC later continues it.</p>
+<div class="drawers">
+<details class="drawer" open><summary>Related events</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1932-05-26"><span class="dm">May</span> <span class="dd">26,</span> <span class="dy">1932</span></time></dt><dd><a href="#R9">Canadian Radio Broadcasting Commission established</a></dd></dl></div></details>
+<details class="drawer"><summary>Sources</summary><div class="drawer-body"><dl class="dl"><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/CNR_Radio">CNR Radio</a><cite class="pub">Wikipedia</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/Canadian_Radio_Broadcasting_Commission">Canadian Radio Broadcasting Commission</a><cite class="pub">Wikipedia</cite></dd></dl></div></details>
+</div></div></details>
+<span class="hc-code"><span aria-hidden="true">CAN</span><span class="vh">Canada</span></span></article>
+</li>
+</ol>
+</section>
+<section class="yr-sec" aria-labelledby="y1932">
+<h2 class="yr" id="y1932">1932</h2>
+<ol class="cards">
+<li>
+<p class="bar"><time class="date" datetime="1932-05-26"><span class="dm">May</span> <span class="dd">26,</span> <span class="dy">1932</span></time></p>
+<article class="hc" id="R9">
+<h3 class="hc-title">Canadian Radio Broadcasting Commission established</h3>
+<details class="hc-d">
+<summary class="hc-sum"><span class="hc-label"><span class="vh"><span class="show">Expand</span><span class="hide">Collapse</span>: Canadian Radio Broadcasting Commission established</span></span></summary>
+<div class="hc-body">
+<p class="desc">The Canadian Radio Broadcasting Act establishes the Canadian Radio Broadcasting Commission (CRBC) as a national public broadcaster and regulator. Hector Charlesworth is its chairman.</p>
+<div class="drawers">
+<details class="drawer" open><summary>Related events</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1933"><span class="dy">1933</span></time></dt><dd><a href="#R10">The CRBC buys CNR’s radio stations and begins national programming</a></dd><dt><time class="date" datetime="1929-09-11"><span class="dm">Sept.</span> <span class="dd">11,</span> <span class="dy">1929</span></time></dt><dd><a href="#R6">Royal Commission recommends a national public broadcaster</a></dd></dl></div></details>
+<details class="drawer"><summary>Sources</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="2008-07"><span class="dm">July</span> <span class="dy">2008</span></time></dt><dd><a class="src-head" href="https://broadcasting-history.ca/radio/radio-networks/the-birth-and-death-of-the-canadian-radio-broadcasting-commission-1932-1936/">The Birth and Death of The Canadian Radio Broadcasting Commission (1932-1936)</a><cite class="pub">broadcasting-history.ca, based on Knowlton Nash, The Microphone Wars (1994); updated July 2008</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/Canadian_Radio_Broadcasting_Commission">Canadian Radio Broadcasting Commission</a><cite class="pub">Wikipedia</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/Canadian_Broadcasting_Corporation">Canadian Broadcasting Corporation</a><cite class="pub">Wikipedia</cite></dd></dl></div></details>
+</div></div></details>
+<span class="hc-code"><span aria-hidden="true">CAN</span><span class="vh">Canada</span></span></article>
+</li>
+</ol>
+</section>
+<section class="yr-sec" aria-labelledby="y1933">
+<h2 class="yr" id="y1933">1933</h2>
+<ol class="cards">
+<li>
+<p class="bar"><time class="date" datetime="1933"><span class="dy">1933</span></time></p>
+<article class="hc" id="R10">
+<h3 class="hc-title">The CRBC buys CNR’s radio stations and begins national programming</h3>
+<details class="hc-d">
+<summary class="hc-sum"><span class="hc-label"><span class="vh"><span class="show">Expand</span><span class="hide">Collapse</span>: The CRBC buys CNR’s radio stations and begins national programming</span></span></summary>
+<div class="hc-body">
+<p class="desc">One of the CRBC’s first actions is buying CNR’s stations in Ottawa, Vancouver and Moncton for $50,000. On 23 February 1933 it offers two hours of national programming a week.</p>
+<div class="drawers">
+<details class="drawer" open><summary>Related events</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1936-11-02"><span class="dm">Nov.</span> <span class="dd">2,</span> <span class="dy">1936</span></time></dt><dd><a href="#R11">The Canadian Broadcasting Corporation begins operations</a></dd><dt><time class="date" datetime="1932-05-26"><span class="dm">May</span> <span class="dd">26,</span> <span class="dy">1932</span></time></dt><dd><a href="#R9">Canadian Radio Broadcasting Commission established</a></dd></dl></div></details>
+<details class="drawer"><summary>Sources</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="2008-07"><span class="dm">July</span> <span class="dy">2008</span></time></dt><dd><a class="src-head" href="https://broadcasting-history.ca/radio/radio-networks/the-birth-and-death-of-the-canadian-radio-broadcasting-commission-1932-1936/">The Birth and Death of The Canadian Radio Broadcasting Commission (1932-1936)</a><cite class="pub">broadcasting-history.ca, based on Knowlton Nash, The Microphone Wars (1994); updated July 2008</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/CNR_Radio">CNR Radio</a><cite class="pub">Wikipedia</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/Canadian_Radio_Broadcasting_Commission">Canadian Radio Broadcasting Commission</a><cite class="pub">Wikipedia</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/Canadian_Broadcasting_Corporation">Canadian Broadcasting Corporation</a><cite class="pub">Wikipedia</cite></dd></dl></div></details>
+</div></div></details>
+<span class="hc-code"><span aria-hidden="true">CAN</span><span class="vh">Canada</span></span></article>
+</li>
+</ol>
+</section>
+<section class="yr-sec" aria-labelledby="y1936">
+<h2 class="yr" id="y1936">1936</h2>
+<ol class="cards">
+<li>
+<p class="bar"><time class="date" datetime="1936-11-02"><span class="dm">Nov.</span> <span class="dd">2,</span> <span class="dy">1936</span></time></p>
+<article class="hc" id="R11">
+<h3 class="hc-title">The Canadian Broadcasting Corporation begins operations</h3>
+<details class="hc-d">
+<summary class="hc-sum"><span class="hc-label"><span class="vh"><span class="show">Expand</span><span class="hide">Collapse</span>: The Canadian Broadcasting Corporation begins operations</span></span></summary>
+<div class="hc-body">
+<p class="desc">The CBC replaces the CRBC when the Canadian Broadcasting Act comes into force. Leonard Brockington is its first chairman.</p>
+<div class="drawers">
+<details class="drawer" open><summary>Related events</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="1933"><span class="dy">1933</span></time></dt><dd><a href="#R10">The CRBC buys CNR’s radio stations and begins national programming</a></dd><dt><time class="date" datetime="1932-05-26"><span class="dm">May</span> <span class="dd">26,</span> <span class="dy">1932</span></time></dt><dd><a href="#R9">Canadian Radio Broadcasting Commission established</a></dd></dl></div></details>
+<details class="drawer"><summary>Sources</summary><div class="drawer-body"><dl class="dl"><dt><time class="date" datetime="2008-07"><span class="dm">July</span> <span class="dy">2008</span></time></dt><dd><a class="src-head" href="https://broadcasting-history.ca/radio/radio-networks/the-birth-and-death-of-the-canadian-radio-broadcasting-commission-1932-1936/">The Birth and Death of The Canadian Radio Broadcasting Commission (1932-1936)</a><cite class="pub">broadcasting-history.ca, based on Knowlton Nash, The Microphone Wars (1994); updated July 2008</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/Canadian_Radio_Broadcasting_Commission">Canadian Radio Broadcasting Commission</a><cite class="pub">Wikipedia</cite></dd><dt><span class="ymd">Undated</span></dt><dd><a class="src-head" href="https://en.wikipedia.org/wiki/Canadian_Broadcasting_Corporation">Canadian Broadcasting Corporation</a><cite class="pub">Wikipedia</cite></dd></dl></div></details>
+</div></div></details>
+<span class="hc-code"><span aria-hidden="true">CAN</span><span class="vh">Canada</span></span></article>
+</li>
+</ol>
+</section>
+</main>
+<footer class="foot">
+<p><a href="mailto:feedback@canadascanada.ca">Get in touch</a> · Prototype for a talk, 31 Oct 2026 · Not yet licensed for reuse · Sources are linked on each card · This page runs no JavaScript.</p>
+</footer>
+</body>
+</html>
